@@ -26,14 +26,44 @@ export const createLead = async (
 
   return lead;
 };
+
+
 export const getAllLeads = async (
   page = 1,
   limit = 10,
-  status?: LeadStatus
+  status?: LeadStatus,
+  search?: string
 ) => {
   const skip = (page - 1) * limit;
 
-  const where = status ? { status } : {};
+  const where: Prisma.LeadWhereInput = {};
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (search) {
+    where.OR = [
+      {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        email: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        company: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
 
   const [leads, total] = await Promise.all([
     prisma.lead.findMany({
@@ -41,28 +71,31 @@ export const getAllLeads = async (
       skip,
       take: limit,
       include: {
-  assignedTo: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
-  },
-  createdBy: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
-  },
-},
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
     }),
-    prisma.lead.count({ where }),
+
+    prisma.lead.count({
+      where,
+    }),
   ]);
 
   return {

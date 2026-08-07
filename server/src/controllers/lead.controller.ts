@@ -76,14 +76,16 @@ export const getLeads = async (
     const limit = Number(req.query.limit) || 10;
 
     const status = req.query.status as LeadStatus | undefined;
+    const search = req.query.search?.toString() || "";
 
     const result = await leadService.getAllLeads(
       page,
       limit,
-      status
+      status,
+      search
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       ...result,
     });
